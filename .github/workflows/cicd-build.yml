@@ -24,7 +24,7 @@ jobs:
       - name: Setup Go
         uses: actions/setup-go@v3
         with:
-          go-version-file: 'go.mod'
+          go-version-file: "go.mod"
       - name: Setup Golang module caches
         uses: actions/cache@v3
         with:
@@ -47,5 +47,4 @@ jobs:
       - name: Build prep
         run: make clean
       - name: Build
-        run: make -j${MAKE_THREADS} cicd-build
-
+        run: make cicd-build
