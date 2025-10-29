@@ -61,7 +61,7 @@ func (e *APIBodyError) Error() string {
 func (e *APIBodyError) WriteError(resp *restful.Response) {
 	output := APIResponseErrorOutput{
 		Type:    fmt.Sprintf("%T", e),
-		Message: e.Error(),
+		Message: e.apiResponseError.message,
 	}
 	resp.WriteHeaderAndEntity(e.apiResponseError.Code(), output)
 }
