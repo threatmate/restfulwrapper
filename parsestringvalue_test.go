@@ -16,184 +16,184 @@ func TestParseStringValue(t *testing.T) {
 		Description string
 		Input       string
 		Target      any
-		Succes      bool
+		Success     bool
 		Output      any
 	}{
 		{
 			Description: "target string must be a pointer",
 			Input:       "",
 			Target:      "",
-			Succes:      false,
+			Success:     false,
 		},
 		{
 			Description: "target int must be a pointer",
 			Input:       "",
 			Target:      int(0),
-			Succes:      false,
+			Success:     false,
 		},
 		{
 			Description: "target float64 must be a pointer",
 			Input:       "",
 			Target:      float64(0),
-			Succes:      false,
+			Success:     false,
 		},
 		{
 			Description: "string can be empty",
 			Input:       "",
 			Target:      new(string),
-			Succes:      true,
+			Success:     true,
 			Output:      "",
 		},
 		{
 			Description: "string can have spaces",
 			Input:       "hello, world",
 			Target:      new(string),
-			Succes:      true,
+			Success:     true,
 			Output:      "hello, world",
 		},
 		{
 			Description: "bool cannot be empty",
 			Input:       "",
 			Target:      new(bool),
-			Succes:      false,
+			Success:     false,
 		},
 		{
 			Description: "bool can be true",
 			Input:       "true",
 			Target:      new(bool),
-			Succes:      true,
+			Success:     true,
 			Output:      true,
 		},
 		{
 			Description: "int cannot be empty",
 			Input:       "",
 			Target:      new(int),
-			Succes:      false,
+			Success:     false,
 		},
 		{
 			Description: "int cannot be words",
 			Input:       "hello, world",
 			Target:      new(int),
-			Succes:      false,
+			Success:     false,
 		},
 		{
 			Description: "int cannot start with words",
 			Input:       "hello 9",
 			Target:      new(int),
-			Succes:      false,
+			Success:     false,
 		},
 		{
 			Description: "int cannot start with words",
 			Input:       "9 world",
 			Target:      new(int),
-			Succes:      false,
+			Success:     false,
 		},
 		{
 			Description: "int can be 0",
 			Input:       "0",
 			Target:      new(int),
-			Succes:      true,
+			Success:     true,
 			Output:      int(0),
 		},
 		{
 			Description: "int can be 1234",
 			Input:       "1234",
 			Target:      new(int),
-			Succes:      true,
+			Success:     true,
 			Output:      int(1234),
 		},
 		{
 			Description: "int cannot have fractional parts",
 			Input:       "1234.5",
 			Target:      new(int),
-			Succes:      false,
+			Success:     false,
 		},
 		{
 			Description: "float64 cannot be empty",
 			Input:       "",
 			Target:      new(float64),
-			Succes:      false,
+			Success:     false,
 		},
 		{
 			Description: "float64 can be 0",
 			Input:       "0",
 			Target:      new(float64),
-			Succes:      true,
+			Success:     true,
 			Output:      float64(0),
 		},
 		{
 			Description: "float64 can be 1234",
 			Input:       "1234",
 			Target:      new(float64),
-			Succes:      true,
+			Success:     true,
 			Output:      float64(1234),
 		},
 		{
 			Description: "float64 can have fractional parts",
 			Input:       "1234.5",
 			Target:      new(float64),
-			Succes:      true,
+			Success:     true,
 			Output:      float64(1234.5),
 		},
 		{
 			Description: "uint can be 1234",
 			Input:       "1234",
 			Target:      new(uint),
-			Succes:      true,
+			Success:     true,
 			Output:      uint(1234),
 		},
 		{
 			Description: "uint8 can be 123",
 			Input:       "123",
 			Target:      new(uint8),
-			Succes:      true,
+			Success:     true,
 			Output:      uint8(123),
 		},
 		{
 			Description: "uint8 cannot be 1234",
 			Input:       "1234",
 			Target:      new(uint8),
-			Succes:      false,
+			Success:     false,
 		},
 		{
 			Description: "uint16 can be 1234",
 			Input:       "1234",
 			Target:      new(uint16),
-			Succes:      true,
+			Success:     true,
 			Output:      uint16(1234),
 		},
 		{
 			Description: "uint32 can be 1234",
 			Input:       "1234",
 			Target:      new(uint32),
-			Succes:      true,
+			Success:     true,
 			Output:      uint32(1234),
 		},
 		{
 			Description: "uint64 can be 1234",
 			Input:       "1234",
 			Target:      new(uint64),
-			Succes:      true,
+			Success:     true,
 			Output:      uint64(1234),
 		},
 		{
 			Description: "MyFloat64 can have fractional parts",
 			Input:       "1234.5",
 			Target:      new(MyFloat64),
-			Succes:      true,
+			Success:     true,
 			Output:      MyFloat64(1234.5),
 		},
 		{
 			Description: "target cannot be a struct",
 			Input:       "",
 			Target:      new(struct{}),
-			Succes:      false,
+			Success:     false,
 		},
 	}
 	for rowIndex, row := range rows {
 		t.Run(fmt.Sprintf("%d/%s", rowIndex, row.Description), func(t *testing.T) {
 			err := parseStringToSingleValue(row.Input, row.Target)
-			if !row.Succes {
+			if !row.Success {
 				require.NotNil(t, err)
 				return
 			}
