@@ -15,18 +15,18 @@ jobs:
       GO_PRIVATE: github.com/threatmate/*
     steps:
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           fetch-depth: 0
       - name: Fetch tags
         run: |
           git fetch --tags --force  # Retrieve annotated tags.
       - name: Setup Go
-        uses: actions/setup-go@v3
+        uses: actions/setup-go@v5
         with:
           go-version-file: "go.mod"
       - name: Setup Golang module caches
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           path: |
             ~/.cache/go-build
@@ -35,7 +35,7 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-golang-module-
       - name: Setup Golang install caches
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           path: |
             ~/go/bin
