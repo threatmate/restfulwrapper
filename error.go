@@ -226,7 +226,7 @@ func NewAPIQueryParameterError(parameter string, parameterError error) error {
 	return err
 }
 
-// APIResponseError is an error that respresents a general HTTP response failure.
+// APIResponseError is an error that represents a general HTTP response failure.
 //
 // This can represent any HTTP error code.
 type APIResponseError struct {
