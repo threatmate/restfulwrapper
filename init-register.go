@@ -200,13 +200,13 @@ func init() {
 		return func(v reflect.Value, req *restful.Request, metadataValue reflect.Value) error {
 			ctx := req.Request.Context()
 
-			stringValue := req.PathParameter(apiTagValue)
+			stringValue := req.HeaderParameter(apiTagValue)
 
 			err := parseStringToSingleValue(stringValue, v.Addr().Interface())
 			if err != nil {
-				return NewAPIPathParameterError(apiTagValue, err)
+				return NewAPIHeaderParameterError(apiTagValue, err)
 			}
-			slog.DebugContext(ctx, fmt.Sprintf("path: %s: Parsed %q to %+v.", apiTagValue, stringValue, v.Interface()))
+			slog.DebugContext(ctx, fmt.Sprintf("header: %s: Parsed %q to %+v.", apiTagValue, stringValue, v.Interface()))
 			return nil
 		}, nil
 	})

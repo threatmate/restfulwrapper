@@ -25,6 +25,12 @@ type APIResponseErrorOutput struct {
 	Message string `json:"message"`
 }
 
+// APIHeaderParameterErrorOutput is the output structure for a header parameter error.
+type APIHeaderParameterErrorOutput struct {
+	APIResponseErrorOutput
+	Parameter string `json:"parameter"`
+}
+
 // APIPathParameterErrorOutput is the output structure for a path parameter error.
 type APIPathParameterErrorOutput struct {
 	APIResponseErrorOutput
@@ -72,6 +78,53 @@ func NewAPIBodyError(bodyError error) error {
 		bodyError: bodyError,
 		apiResponseError: &APIResponseError{
 			message:   bodyError.Error(),
+			httpError: httperror.ErrorFromStatus(http.StatusBadRequest),
+		},
+	}
+	return err
+}
+
+// APIHeaderParameterError is an error that represents a header parameter error.
+//
+// This will always be a 400-level error.
+type APIHeaderParameterError struct {
+	parameter        string
+	parameterError   error
+	apiResponseError *APIResponseError
+}
+
+var _ error = (*APIHeaderParameterError)(nil)
+var _ ErrorWriter = (*APIHeaderParameterError)(nil)
+
+func (e *APIHeaderParameterError) Error() string {
+	return e.parameterError.Error()
+}
+func (e *APIHeaderParameterError) WriteError(resp *restful.Response) {
+	output := APIHeaderParameterErrorOutput{
+		APIResponseErrorOutput: APIResponseErrorOutput{
+			Type:    fmt.Sprintf("%T", e),
+			Message: e.apiResponseError.message,
+		},
+		Parameter: e.parameter,
+	}
+	resp.WriteHeaderAndEntity(e.apiResponseError.Code(), output)
+}
+
+func (e *APIHeaderParameterError) Unwrap() []error {
+	return []error{e.parameterError, e.apiResponseError}
+}
+
+// NewAPIHeaderParameterError returns a new path parameter error.
+//
+// Call this any time there is any issue at all with a path parameter.
+// For example, if it is required but missing; if it has an incorrect value; or
+// if it needed to be parsed and could not be parsed.
+func NewAPIHeaderParameterError(parameter string, parameterError error) error {
+	err := &APIHeaderParameterError{
+		parameter:      parameter,
+		parameterError: parameterError,
+		apiResponseError: &APIResponseError{
+			message:   parameterError.Error(),
 			httpError: httperror.ErrorFromStatus(http.StatusBadRequest),
 		},
 	}
