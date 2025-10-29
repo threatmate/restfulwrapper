@@ -54,7 +54,7 @@ func ParseRestfulFunction(f interface{}) (*RestfulFunctionInfo, error) {
 
 		if argumentType.Implements(errorType) {
 			if info.OutErrorPosition >= 0 {
-				return nil, fmt.Errorf("multiple context.Context arguments")
+				return nil, fmt.Errorf("multiple error arguments")
 			}
 			info.OutErrorPosition = i
 		} else {
