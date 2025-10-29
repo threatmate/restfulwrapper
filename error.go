@@ -114,9 +114,9 @@ func (e *APIHeaderParameterError) Unwrap() []error {
 	return []error{e.parameterError, e.apiResponseError}
 }
 
-// NewAPIHeaderParameterError returns a new path parameter error.
+// NewAPIHeaderParameterError returns a new header parameter error.
 //
-// Call this any time there is any issue at all with a path parameter.
+// Call this any time there is any issue at all with a header parameter.
 // For example, if it is required but missing; if it has an incorrect value; or
 // if it needed to be parsed and could not be parsed.
 func NewAPIHeaderParameterError(parameter string, parameterError error) error {
