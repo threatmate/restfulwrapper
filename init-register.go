@@ -96,70 +96,73 @@ func init() {
 		}
 
 		return func(v reflect.Value, req *restful.Request, metadataValue reflect.Value) error {
-			if !allowEmpty {
-				v.Set(reflect.New(field.Type).Elem())
+			v.Set(reflect.New(field.Type).Elem())
 
-				contentType := ""
-				if len(info.Consumes) > 0 {
-					contentType = info.Consumes[0]
+			contentType := ""
+			if len(info.Consumes) > 0 {
+				contentType = info.Consumes[0]
+			}
+			slog.DebugContext(req.Request.Context(), fmt.Sprintf("Content-Type: %s", contentType))
+
+			switch contentType {
+			case "application/x-www-form-urlencoded":
+				err := req.Request.ParseForm()
+				if err != nil {
+					return NewAPIBodyError(err)
 				}
-				slog.DebugContext(req.Request.Context(), fmt.Sprintf("Content-Type: %s", contentType))
 
-				switch contentType {
-				case "application/x-www-form-urlencoded":
-					err := req.Request.ParseForm()
+				switch field.Type.String() {
+				case "url.Values":
+					v.Set(reflect.ValueOf(req.Request.PostForm))
+				case "*url.Values":
+					v.Set(reflect.ValueOf(&req.Request.PostForm))
+				}
+			case "multipart/form-data":
+				multipartReader, err := req.Request.MultipartReader()
+				if err != nil {
+					return NewAPIBodyError(err)
+				}
+				multipartForm, err := multipartReader.ReadForm(10 * 1000 * 1000 /*10MB in RAM*/)
+				if err != nil {
+					return NewAPIBodyError(err)
+				}
+
+				switch field.Type.String() {
+				case "multipart.Form":
+					v.Set(reflect.ValueOf(*multipartForm))
+				case "*multipart.Form":
+					v.Set(reflect.ValueOf(multipartForm))
+				}
+			default:
+				// If they asked for a string, then read the body as a string.
+				if v.Kind() == reflect.String {
+					contents, err := io.ReadAll(req.Request.Body)
 					if err != nil {
 						return NewAPIBodyError(err)
 					}
+					v.Set(reflect.ValueOf(string(contents)))
+					return nil
+				}
 
-					switch field.Type.String() {
-					case "url.Values":
-						v.Set(reflect.ValueOf(req.Request.PostForm))
-					case "*url.Values":
-						v.Set(reflect.ValueOf(&req.Request.PostForm))
-					}
-				case "multipart/form-data":
-					multipartReader, err := req.Request.MultipartReader()
+				// If they asked for a byte slice, then read the body as a byte slice.
+				if v.Type().String() == "[]byte" {
+					contents, err := io.ReadAll(req.Request.Body)
 					if err != nil {
 						return NewAPIBodyError(err)
 					}
-					multipartForm, err := multipartReader.ReadForm(10 * 1000 * 1000 /*10MB in RAM*/)
-					if err != nil {
-						return NewAPIBodyError(err)
-					}
+					v.Set(reflect.ValueOf(contents))
+					return nil
+				}
 
-					switch field.Type.String() {
-					case "multipart.Form":
-						v.Set(reflect.ValueOf(*multipartForm))
-					case "*multipart.Form":
-						v.Set(reflect.ValueOf(multipartForm))
-					}
-				default:
-					// If they asked for a string, then read the body as a string.
-					if v.Kind() == reflect.String {
-						contents, err := io.ReadAll(req.Request.Body)
-						if err != nil {
-							return NewAPIBodyError(err)
-						}
-						v.Set(reflect.ValueOf(string(contents)))
-						return nil
-					}
+				// Otherwise, attempt to use restful's default method.
+				if allowEmpty && req.Request.ContentLength == 0 {
+					// Allow empty bodies.
+					return nil
+				}
 
-					// If they asked for a byte slice, then read the body as a byte slice.
-					if v.Type().String() == "[]byte" {
-						contents, err := io.ReadAll(req.Request.Body)
-						if err != nil {
-							return NewAPIBodyError(err)
-						}
-						v.Set(reflect.ValueOf(contents))
-						return nil
-					}
-
-					// Otherwise, attempt to use restful's default method.
-					err := req.ReadEntity(v.Addr().Interface())
-					if err != nil {
-						return NewAPIBodyError(err)
-					}
+				err := req.ReadEntity(v.Addr().Interface())
+				if err != nil {
+					return NewAPIBodyError(err)
 				}
 			}
 			return nil
