@@ -25,6 +25,20 @@ func TestError(t *testing.T) {
 			assert.Equal(t, input, baseErr.bodyError)
 		}
 	})
+	t.Run("APIHeaderParameterError", func(t *testing.T) {
+		input := fmt.Errorf("error-1")
+		err := NewAPIHeaderParameterError("key", input)
+		require.NotNil(t, err)
+		assert.ErrorIs(t, err, input)
+		assert.ErrorIs(t, err, httperror.ErrStatusBadRequest)
+		assert.Equal(t, "error-1", err.Error())
+
+		baseErr := &APIHeaderParameterError{}
+		if assert.ErrorAs(t, err, &baseErr) {
+			assert.Equal(t, "key", baseErr.parameter)
+			assert.Equal(t, input, baseErr.parameterError)
+		}
+	})
 	t.Run("APIPathParameterError", func(t *testing.T) {
 		input := fmt.Errorf("error-1")
 		err := NewAPIPathParameterError("key", input)
@@ -38,7 +52,6 @@ func TestError(t *testing.T) {
 			assert.Equal(t, "key", baseErr.parameter)
 			assert.Equal(t, input, baseErr.parameterError)
 		}
-
 	})
 	t.Run("APIQueryParameterError", func(t *testing.T) {
 		input := fmt.Errorf("error-1")
