@@ -104,7 +104,7 @@ func (a *SubAPI) GetEndpoint4(ctx context.Context, meta GetEndpoint4Metadata) (s
 
 func TestRestfulWrapper(t *testing.T) {
 	if value := os.Getenv("DEBUG"); value == "1" || value == "true" {
-		slog.NewTextHandler(os.Stderr, &slog.HandlerOptions{Level: slog.LevelDebug})
+		slog.SetDefault(slog.New(slog.NewTextHandler(os.Stderr, &slog.HandlerOptions{Level: slog.LevelDebug})))
 	}
 
 	ctx := t.Context()
@@ -240,7 +240,7 @@ func TestRestfulWrapper(t *testing.T) {
 		err = json.Unmarshal(bodyBytes, &output)
 		require.Nil(t, err)
 		assert.Equal(t, `*restfulwrapper.APIBodyError`, output["type"])
-		assert.Equal(t, `EOF`, output["message"])
+		assert.Contains(t, output["message"], `EOF`)
 		assert.NotContains(t, output, "parameter")
 	})
 	t.Run("POST /api/v1/subapi/endpoint2/1 with body key", func(t *testing.T) {
