@@ -6,6 +6,7 @@ require (
 	github.com/emicklei/go-restful/v3 v3.13.0
 	github.com/stretchr/testify v1.11.1
 	github.com/tekkamanendless/httperror v1.0.1
+	github.com/threatmate/restapiclient v0.2.0
 )
 
 require (

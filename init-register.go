@@ -52,7 +52,7 @@ func init() {
 			}
 		}
 
-		if !allowEmpty {
+		{
 			exampleValue := reflect.New(field.Type)
 			if exampleValue.Kind() == reflect.Pointer {
 				exampleValue = exampleValue.Elem()
@@ -108,7 +108,7 @@ func init() {
 			case "application/x-www-form-urlencoded":
 				err := req.Request.ParseForm()
 				if err != nil {
-					return NewAPIBodyError(err)
+					return NewAPIBodyError(fmt.Errorf("could not parse form data: %w", err))
 				}
 
 				switch field.Type.String() {
@@ -120,11 +120,11 @@ func init() {
 			case "multipart/form-data":
 				multipartReader, err := req.Request.MultipartReader()
 				if err != nil {
-					return NewAPIBodyError(err)
+					return NewAPIBodyError(fmt.Errorf("could not get multipart reader: %w", err))
 				}
 				multipartForm, err := multipartReader.ReadForm(10 * 1000 * 1000 /*10MB in RAM*/)
 				if err != nil {
-					return NewAPIBodyError(err)
+					return NewAPIBodyError(fmt.Errorf("could not read multipart form: %w", err))
 				}
 
 				switch field.Type.String() {
@@ -138,17 +138,18 @@ func init() {
 				if v.Kind() == reflect.String {
 					contents, err := io.ReadAll(req.Request.Body)
 					if err != nil {
-						return NewAPIBodyError(err)
+						return NewAPIBodyError(fmt.Errorf("could not read request body (string): %w", err))
 					}
 					v.Set(reflect.ValueOf(string(contents)))
 					return nil
 				}
 
+				slog.DebugContext(req.Request.Context(), fmt.Sprintf("Body type: %s", v.Type().String()))
 				// If they asked for a byte slice, then read the body as a byte slice.
-				if v.Type().String() == "[]byte" {
+				if v.Type().String() == "[]byte" || v.Type().String() == "[]uint8" {
 					contents, err := io.ReadAll(req.Request.Body)
 					if err != nil {
-						return NewAPIBodyError(err)
+						return NewAPIBodyError(fmt.Errorf("could not read request body (byte slice): %w", err))
 					}
 					v.Set(reflect.ValueOf(contents))
 					return nil
@@ -162,7 +163,7 @@ func init() {
 
 				err := req.ReadEntity(v.Addr().Interface())
 				if err != nil {
-					return NewAPIBodyError(err)
+					return NewAPIBodyError(fmt.Errorf("could not read request body (entity): %w", err))
 				}
 			}
 			return nil
