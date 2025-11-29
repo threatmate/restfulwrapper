@@ -218,9 +218,15 @@ func (r *RestfulRouteWrapper) Produces(contentTypes ...string) *RestfulRouteWrap
 
 // RouteBuilder returns a RouteBuilder with everything we know so far.
 func (r *RestfulRouteWrapper) RouteBuilder() *restful.RouteBuilder {
+	// Use a unique operation name for the route that is also descriptive.
+	// This way AI systems can easily identify the route and its purpose.
+	// Convert the path / to - for the operation name.
+	convertedPath := strings.ReplaceAll(r.path, "/", "-")
+	operationName := strings.ToLower(r.method + convertedPath)
 	routeBuilder := r.ws.ws.
 		Method(r.method).
 		Path(r.path).
+		Operation(operationName).
 		To(restfulFunctionWrapper(r.functionWithError)).
 		Filter(filterSetAttributes(r.ws.attributes)).
 		Do(r.doFunctions...)
