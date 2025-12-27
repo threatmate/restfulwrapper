@@ -3,6 +3,7 @@ package restfulwrapper_test
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"log/slog"
@@ -102,6 +103,32 @@ func (a *SubAPI) GetEndpoint4(ctx context.Context, meta GetEndpoint4Metadata) (s
 	return "", fmt.Errorf("wrap3: %w", fmt.Errorf("wrap2: %w", fmt.Errorf("wrap1: %w", &CustomError{})))
 }
 
+type GetEndpoint5Metadata struct {
+	restfulwrapper.HTTPMethodGET
+	_ string `api:"httppath:/endpoint5"`
+	_ string `api:"doc" description:"Endpoint 5 doc."`
+	_ string `api:"notes" description:"Endpoint 5 notes"`
+}
+
+var ErrCustomNotFound1 = fmt.Errorf("custom not found 1")
+
+func (a *SubAPI) GetEndpoint5(ctx context.Context, meta GetEndpoint5Metadata) (string, error) {
+	return "", fmt.Errorf("wrap: %w", ErrCustomNotFound1)
+}
+
+type GetEndpoint6Metadata struct {
+	restfulwrapper.HTTPMethodGET
+	_ string `api:"httppath:/endpoint6"`
+	_ string `api:"doc" description:"Endpoint 6 doc."`
+	_ string `api:"notes" description:"Endpoint 6 notes"`
+}
+
+var ErrCustomNotFound2 = fmt.Errorf("custom not found 2")
+
+func (a *SubAPI) GetEndpoint6(ctx context.Context, meta GetEndpoint6Metadata) (string, error) {
+	return "", fmt.Errorf("wrap: %w", ErrCustomNotFound2)
+}
+
 func TestRestfulWrapper(t *testing.T) {
 	if value := os.Getenv("DEBUG"); value == "1" || value == "true" {
 		slog.SetDefault(slog.New(slog.NewTextHandler(os.Stderr, &slog.HandlerOptions{Level: slog.LevelDebug})))
@@ -111,7 +138,13 @@ func TestRestfulWrapper(t *testing.T) {
 
 	webService := restfulwrapper.WebService("/api").
 		Consumes(restful.MIME_JSON).
-		Produces(restful.MIME_JSON)
+		Produces(restful.MIME_JSON).
+		ErrorHandler(func(err error) error {
+			if errors.Is(err, ErrCustomNotFound2) {
+				return restfulwrapper.NewAPIResponseError(http.StatusNotFound, "Not Found")
+			}
+			return err
+		})
 	{
 		session := webService.Session()
 		session.Register(ctx, "/v1", &API{})
@@ -295,4 +328,46 @@ func TestRestfulWrapper(t *testing.T) {
 
 		require.Equal(t, `custom WriteError`, string(bodyBytes))
 	})
+	t.Run("GET /api/v1/subapi/endpoint5", func(t *testing.T) {
+		req, err := http.NewRequestWithContext(ctx, http.MethodGet, server.URL+"/api/v1/subapi/endpoint5", nil)
+		require.Nil(t, err)
+
+		resp, err := http.DefaultClient.Do(req)
+		require.Nil(t, err)
+		defer resp.Body.Close()
+
+		require.Equal(t, http.StatusInternalServerError, resp.StatusCode)
+
+		bodyBytes, err := io.ReadAll(resp.Body)
+		require.Nil(t, err)
+
+		var output map[string]string
+		err = json.Unmarshal(bodyBytes, &output)
+		require.Nil(t, err)
+		assert.Equal(t, `*fmt.wrapError`, output["type"])
+		assert.Equal(t, `wrap: custom not found 1`, output["message"])
+		assert.NotContains(t, output, "parameter")
+	})
+
+	t.Run("GET /api/v1/subapi/endpoint6", func(t *testing.T) {
+		req, err := http.NewRequestWithContext(ctx, http.MethodGet, server.URL+"/api/v1/subapi/endpoint6", nil)
+		require.Nil(t, err)
+
+		resp, err := http.DefaultClient.Do(req)
+		require.Nil(t, err)
+		defer resp.Body.Close()
+
+		require.Equal(t, http.StatusNotFound, resp.StatusCode)
+
+		bodyBytes, err := io.ReadAll(resp.Body)
+		require.Nil(t, err)
+
+		var output map[string]string
+		err = json.Unmarshal(bodyBytes, &output)
+		require.Nil(t, err)
+		assert.Equal(t, `*restfulwrapper.APIResponseError`, output["type"])
+		assert.Equal(t, `Not Found`, output["message"])
+		assert.NotContains(t, output, "parameter")
+	})
+
 }

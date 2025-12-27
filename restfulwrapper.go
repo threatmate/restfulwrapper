@@ -69,6 +69,7 @@ type RestfulWrapper struct {
 	consumes       []string                      // This is a list of any MIME types that will be consumed.
 	produces       []string                      // This is a list of any MIME types that will be produced.
 	contextActions []ContextAction               // This is a list of context actions to take for each request.
+	errorHandler   ErrorHandler                  // This is the error handler to use for each request.  If nil, the error will be returned as is.
 }
 
 // Session returns a new session of the wrapper.  Any modifications will not affect
@@ -91,7 +92,7 @@ func (r *RestfulWrapper) Session() *RestfulWrapper {
 	newWrapper.consumes = append(newWrapper.consumes, r.consumes...)
 	newWrapper.produces = append(newWrapper.produces, r.produces...)
 	newWrapper.contextActions = append(newWrapper.contextActions, r.contextActions...)
-
+	newWrapper.errorHandler = r.errorHandler
 	return newWrapper
 }
 
@@ -179,6 +180,16 @@ func (r *RestfulWrapper) PUT(path string) *RestfulRouteWrapper {
 // WebService returns the underlying restful.WebService for use with the other restful functions.
 func (r *RestfulWrapper) WebService() *restful.WebService {
 	return r.ws
+}
+
+// ErrorHandler can be used to translate an error into a different error.
+//
+// This is useful if you use a custom error type that you want to translate into a particular HTTP status code, for example.
+type ErrorHandler func(err error) error
+
+func (r *RestfulWrapper) ErrorHandler(errorHandler ErrorHandler) *RestfulWrapper {
+	r.errorHandler = errorHandler
+	return r
 }
 
 // RestfulRouteWrapper wraps a route and ultimately will result in a `*restful.RouteBuilder` value.
@@ -270,7 +281,7 @@ func (r *RestfulWrapper) Register(ctx context.Context, path string, f interface{
 
 		routeWrapper := r.Method(info.HTTPMethod)
 		routeWrapper.Path(routePath)
-		routeWrapper.functionWithError = info.CreateFunctionWithError()
+		routeWrapper.functionWithError = info.CreateFunctionWithError(r.errorHandler)
 		{
 			fs := []func(*restful.RouteBuilder){
 				func(builder *restful.RouteBuilder) {
