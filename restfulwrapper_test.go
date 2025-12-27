@@ -348,7 +348,6 @@ func TestRestfulWrapper(t *testing.T) {
 		assert.Equal(t, `wrap: custom not found 1`, output["message"])
 		assert.NotContains(t, output, "parameter")
 	})
-
 	t.Run("GET /api/v1/subapi/endpoint6", func(t *testing.T) {
 		req, err := http.NewRequestWithContext(ctx, http.MethodGet, server.URL+"/api/v1/subapi/endpoint6", nil)
 		require.Nil(t, err)
