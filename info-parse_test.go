@@ -510,7 +510,7 @@ func TestParseRestfulFunction(t *testing.T) {
 				assert.Equal(t, "my description", output.QueryParameters[1].Description)
 			}
 
-			f := output.CreateFunctionWithError()
+			f := output.CreateFunctionWithError(nil)
 			assert.NotNil(t, f)
 		})
 	})

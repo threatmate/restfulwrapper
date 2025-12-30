@@ -121,7 +121,7 @@ func (info *RestfulFunctionInfo) UpdateRouteBuilder(routeBuilder *restful.RouteB
 }
 
 // CreateFunctionWithError returns a `RestfulFunctionWithError` using the given attributes.
-func (info *RestfulFunctionInfo) CreateFunctionWithError() RestfulFunctionWithError {
+func (info *RestfulFunctionInfo) CreateFunctionWithError(errorHandler ErrorHandler) RestfulFunctionWithError {
 	// Create the function that we'll return.
 	functionWithError := func(req *restful.Request, resp *restful.Response) error {
 		ctx := req.Request.Context()
@@ -180,6 +180,12 @@ func (info *RestfulFunctionInfo) CreateFunctionWithError() RestfulFunctionWithEr
 		}
 		// If the method failed, then return that error.
 		if err != nil {
+			if errorHandler != nil {
+				newErr := errorHandler(err)
+				if newErr != nil {
+					err = newErr
+				}
+			}
 			return err
 		}
 
