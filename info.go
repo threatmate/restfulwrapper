@@ -154,6 +154,12 @@ func (info *RestfulFunctionInfo) CreateFunctionWithError(errorHandler ErrorHandl
 
 				err := inputField.Function(fieldValue, req, inputValue)
 				if err != nil {
+					if errorHandler != nil {
+						newErr := errorHandler(err)
+						if newErr != nil {
+							err = newErr
+						}
+					}
 					return err
 				}
 			}
