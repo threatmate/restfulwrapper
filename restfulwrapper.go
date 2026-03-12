@@ -256,7 +256,7 @@ func (r *RestfulRouteWrapper) RouteBuilder() *restful.RouteBuilder {
 //
 // The path given will be used as the root for any endpoints.  Note that the RestfulWrapper
 // itself may already have its own path root; this new path will be appended to that.
-func (r *RestfulWrapper) Register(ctx context.Context, path string, f interface{}) {
+func (r *RestfulWrapper) Register(ctx context.Context, path string, f any) {
 	var fValue = reflect.ValueOf(f)
 
 	slog.DebugContext(ctx, fmt.Sprintf("Registering: %s at %s", fValue.Type().String(), path))
@@ -266,8 +266,8 @@ func (r *RestfulWrapper) Register(ctx context.Context, path string, f interface{
 
 		info, err := ParseRestfulFunction(methodValue.Interface())
 		if err != nil {
-			slog.ErrorContext(ctx, fmt.Sprintf("Could not parse function: %v: %v", fValue.Type().Method(i).Name, err))
-			panic(fmt.Errorf("could not parse function: %v: %w", fValue.Type().Method(i).Name, err))
+			slog.ErrorContext(ctx, fmt.Sprintf("Could not parse function (%T): %v: %v", f, fValue.Type().Method(i).Name, err))
+			panic(fmt.Errorf("could not parse function (%T): %v: %w", f, fValue.Type().Method(i).Name, err))
 		}
 
 		routePath := "/" + strings.Trim(path, "/")
