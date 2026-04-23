@@ -346,7 +346,8 @@ func init() {
 				case "string":
 					v.Set(reflect.ValueOf(strings.Join(contentTypeList, ",")))
 				case "[]string":
-					v.Set(reflect.ValueOf(contentTypeList))
+					contentTypeListCopy := slices.Clone(contentTypeList)
+					v.Set(reflect.ValueOf(contentTypeListCopy))
 				}
 			}
 			return nil
