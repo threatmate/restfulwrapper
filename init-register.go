@@ -324,15 +324,27 @@ func init() {
 
 		switch field.Type.String() {
 		case "string":
+		case "[]string":
 		default:
 			return nil, fmt.Errorf("bad type: %s", field.Type.String())
 		}
 
-		info.Produces = append(info.Produces, apiTagValue)
+		contentTypeList := strings.Split(apiTagValue, ",")
+		for i, contentType := range contentTypeList {
+			contentType = strings.TrimSpace(contentType)
+			contentTypeList[i] = contentType
+		}
+
+		info.Produces = append(info.Produces, contentTypeList...)
 
 		return func(v reflect.Value, req *restful.Request, metadataValue reflect.Value) error {
 			if v.CanSet() {
-				v.Set(reflect.ValueOf(apiTagValue))
+				switch field.Type.String() {
+				case "string":
+					v.Set(reflect.ValueOf(strings.Join(contentTypeList, ",")))
+				case "[]string":
+					v.Set(reflect.ValueOf(contentTypeList))
+				}
 			}
 			return nil
 		}, nil
