@@ -330,7 +330,7 @@ func init() {
 		}
 
 		var contentTypeList []string
-		for i, contentType := range strings.Split(apiTagValue, ",") {
+		for _, contentType := range strings.Split(apiTagValue, ",") {
 			contentType = strings.TrimSpace(contentType)
 			if contentType == "" {
 				continue
