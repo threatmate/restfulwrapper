@@ -329,10 +329,13 @@ func init() {
 			return nil, fmt.Errorf("bad type: %s", field.Type.String())
 		}
 
-		contentTypeList := strings.Split(apiTagValue, ",")
-		for i, contentType := range contentTypeList {
+		var contentTypeList []string
+		for i, contentType := range strings.Split(apiTagValue, ",") {
 			contentType = strings.TrimSpace(contentType)
-			contentTypeList[i] = contentType
+			if contentType == "" {
+				continue
+			}
+			contentTypeList = append(contentTypeList, contentType)
 		}
 
 		info.Produces = append(info.Produces, contentTypeList...)
