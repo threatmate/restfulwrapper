@@ -1,8 +1,11 @@
 package debugapi_test
 
 import (
+	"bytes"
 	"context"
+	"encoding/json"
 	"fmt"
+	"io"
 	"log/slog"
 	"net/http"
 	"net/http/httptest"
@@ -13,7 +16,6 @@ import (
 	"github.com/emicklei/go-restful/v3"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"github.com/threatmate/restapiclient"
 	"github.com/threatmate/restfulwrapper"
 )
 
@@ -143,8 +145,6 @@ func TestDebug(t *testing.T) {
 	defer server.Close()
 	slog.DebugContext(ctx, fmt.Sprintf("Debug server listening on: %s", server.URL))
 
-	restClient := restapiclient.New(server.URL)
-
 	t.Run("Debug", func(t *testing.T) {
 		methods := []string{
 			http.MethodDelete,
@@ -157,8 +157,22 @@ func TestDebug(t *testing.T) {
 			t.Run(method, func(t *testing.T) {
 				input := "test-input-here"
 				var output GetOutput
-				err := restClient.Do(ctx, method, "/api/v1/debug/request", input, &output)
-				require.Nil(t, err)
+
+				var httpClient http.Client
+				requestBody, err := json.Marshal(input)
+				require.NoError(t, err)
+				request, err := http.NewRequest(method, server.URL+"/api/v1/debug/request", bytes.NewBuffer(requestBody))
+				require.NoError(t, err)
+				response, err := httpClient.Do(request)
+				require.NoError(t, err)
+				defer response.Body.Close()
+				assert.Equal(t, http.StatusOK, response.StatusCode)
+				{
+					responseBody, err := io.ReadAll(response.Body)
+					require.Nil(t, err)
+					err = json.Unmarshal(responseBody, &output)
+					require.Nil(t, err)
+				}
 				assert.Equal(t, method, output.Method)
 				assert.Equal(t, "HTTP/1.1", output.Proto)
 				assert.Equal(t, []string{fmt.Sprintf("%d", len(`"`+input+`"`))}, output.Header["Content-Length"])

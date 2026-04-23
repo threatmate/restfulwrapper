@@ -324,15 +324,31 @@ func init() {
 
 		switch field.Type.String() {
 		case "string":
+		case "[]string":
 		default:
 			return nil, fmt.Errorf("bad type: %s", field.Type.String())
 		}
 
-		info.Produces = append(info.Produces, apiTagValue)
+		var contentTypeList []string
+		for _, contentType := range strings.Split(apiTagValue, ",") {
+			contentType = strings.TrimSpace(contentType)
+			if contentType == "" {
+				continue
+			}
+			contentTypeList = append(contentTypeList, contentType)
+		}
+
+		info.Produces = append(info.Produces, contentTypeList...)
 
 		return func(v reflect.Value, req *restful.Request, metadataValue reflect.Value) error {
 			if v.CanSet() {
-				v.Set(reflect.ValueOf(apiTagValue))
+				switch field.Type.String() {
+				case "string":
+					v.Set(reflect.ValueOf(strings.Join(contentTypeList, ",")))
+				case "[]string":
+					contentTypeListCopy := slices.Clone(contentTypeList)
+					v.Set(reflect.ValueOf(contentTypeListCopy))
+				}
 			}
 			return nil
 		}, nil
