@@ -164,12 +164,13 @@ func TestDebug(t *testing.T) {
 				request, err := http.NewRequest(method, server.URL+"/api/v1/debug/request", bytes.NewBuffer(requestBody))
 				require.NoError(t, err)
 				response, err := httpClient.Do(request)
+				require.NoError(t, err)
+				assert.Equal(t, http.StatusOK, response.StatusCode)
 				{
 					responseBody, err := io.ReadAll(response.Body)
 					require.Nil(t, err)
 					json.Unmarshal(responseBody, &output)
 				}
-				require.NoError(t, err)
 				assert.Equal(t, method, output.Method)
 				assert.Equal(t, "HTTP/1.1", output.Proto)
 				assert.Equal(t, []string{fmt.Sprintf("%d", len(`"`+input+`"`))}, output.Header["Content-Length"])
