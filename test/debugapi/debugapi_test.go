@@ -165,6 +165,7 @@ func TestDebug(t *testing.T) {
 				require.NoError(t, err)
 				response, err := httpClient.Do(request)
 				require.NoError(t, err)
+				defer response.Body.Close()
 				assert.Equal(t, http.StatusOK, response.StatusCode)
 				{
 					responseBody, err := io.ReadAll(response.Body)
