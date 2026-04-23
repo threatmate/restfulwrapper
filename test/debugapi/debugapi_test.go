@@ -169,7 +169,8 @@ func TestDebug(t *testing.T) {
 				{
 					responseBody, err := io.ReadAll(response.Body)
 					require.Nil(t, err)
-					json.Unmarshal(responseBody, &output)
+					err = json.Unmarshal(responseBody, &output)
+					require.Nil(t, err)
 				}
 				assert.Equal(t, method, output.Method)
 				assert.Equal(t, "HTTP/1.1", output.Proto)
